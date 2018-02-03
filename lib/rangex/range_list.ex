@@ -134,7 +134,7 @@ defmodule Rangex.RangeList do
     |> Enum.reduce(nil, fn
         range, nil -> {range, R.to(range), 0}
         range,{max, last_end, max_len} ->
-          case R.from(range) - last_end do
+          case R.difference(range,R.from(range) ,  last_end) do
             diff when diff > max_len -> {R.new(range, last_end, R.from(range)), R.to(range), diff }
             _->{max, R.to(range), max_len}
           end

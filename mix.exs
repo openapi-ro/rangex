@@ -4,7 +4,7 @@ defmodule Rangex.MixProject do
   def project do
     [
       app: :rangex,
-      version: "0.1.0",
+      version: "0.1.1-dev",
       package: [
         maintainers: ["Paul Balomiri", "paul.balomiri@gmail.com"],
         description: "Range manipulation library",
@@ -30,9 +30,8 @@ defmodule Rangex.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:excoveralls, "~> 0.8", only: :test}
-      # {:dep_from_hexpm, "~> 0.3.0"},
-      # {:dep_from_git, git: "https://github.com/elixir-lang/my_dep.git", tag: "0.1.0"},
+      {:excoveralls, "~> 0.8", only: :test},
+      {:ex_doc, ">= 0.0.0", only: :dev}
     ]
   end
 end
