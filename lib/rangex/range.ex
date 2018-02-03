@@ -108,7 +108,7 @@ defimpl Rangex.Range, for: Any do
   @fallback_to_any true
   def from(range), do: range.from
   def to(range), do: range.to
-  def new(model,from,to) do
+  def new(_model,from,to) do
     # is it ok to use a tuple in  `Any`'s implementation?'
     %{from: from, to: to}
   end
@@ -145,7 +145,7 @@ defimpl Rangex.Range, for: Any do
 end
 defimpl Rangex.Range, for: Tuple do
   use Rangex.Range.Default
-  def from({from,_}), do: from
-  def to({from,to}), do: to
-  def new(model,from, to), do: {from,to}
+  def from({from,_to}), do: from
+  def to({_from,to}), do: to
+  def new(_model,from, to), do: {from,to}
 end

@@ -5,7 +5,12 @@ defmodule Rangex.MixProject do
     [
       app: :rangex,
       version: "0.1.0",
-      elixir: "~> 1.7-dev",
+      package: [
+        maintainers: ["Paul Balomiri", "paul.balomiri@gmail.com"],
+        description: "Range manipulation library",
+        licenses: ["WTFPL"],
+        links: %{"GitHub" => "https://github.com/openapi-ro/rangex"}
+      ],
       start_permanent: Mix.env() == :prod,
       deps: deps(),
       test_coverage: [tool: ExCoveralls],
