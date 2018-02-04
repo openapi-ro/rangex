@@ -61,5 +61,16 @@ defmodule RangeListTest do
     assert L.longest_gap([{1,3}, {10,20},{30,40}]) == {20,30}
     assert L.longest_gap([{1,3}, {15,20},{30,40}], {0,100}) == {40,100}
   end
+  test "first_gap" do
+    assert L.first_gap([{1,3}, {5,6}]) == {3,5}
+    assert L.first_gap([{1,3}, {3,6}, {10,11}]) == {6,10}
+    #now with encompassing range
+    assert L.first_gap([{1,3}, {5,6}], {-3,100}) == {-3,1}
+    assert L.first_gap([{-3,3}, {3,6}], {-3,100}) == {6,100}
+
+    # now with a range cutting the first gap short
+    assert L.first_gap([{1,3}, {5,6}], {-2,100}) == {-2,1}
+    assert L.first_gap([{-3,3}, {3,6}, {500,1000}], {-3,100}) == {6,100}
+  end
 
 end

@@ -141,5 +141,48 @@ defmodule Rangex.RangeList do
     end)
     |> elem(0)
   end
+  @doc """
+    first_gap returns the first gap found, logging
+    - between at the each successive pair of ranges
+    - between the limits optionally provided in covering_range
+
+    in case a covering range is supplied any gaps before or after it are ignored
+  """
+  def first_gap(range_list, covering_range\\nil) do
+    n_th_gap(1,range_list,covering_range)
+  end
+  #TODO: maybe expose this, but also add the possibility to look from the end
+  defp n_th_gap(n, [], _), do: nil
+  defp n_th_gap(n, range_list, covering_range) do
+    ret=
+      case covering_range do
+        nil-> range_list
+        range->
+          mod=
+            range_list
+            |> cut_before(  R.from(covering_range))
+            |> cut_after(  R.to(covering_range))
+          [R.new(covering_range, R.from(covering_range),  R.from(covering_range))|mod]++ [
+            R.new(covering_range, R.to(covering_range),  R.to(covering_range))
+          ]
+      end
+      |> Enum.reduce_while( nil , fn
+        range, nil -> {:cont, {0,R.to(range)}}
+        range, {prev_count,last_to} ->
+          if R.difference(range,R.from(range), last_to) == 0 do
+            {:cont, {prev_count, R.to(range)}}
+          else
+            if n == prev_count+1 do
+              {:halt, {:result, R.new(range,last_to, R.from(range))}}
+            else
+              {:cont, {prev_count+1,R.to(range)}}
+            end
+          end
+        end)
+    case ret do
+      {:result,ret}-> ret
+      _ -> nil#not found
+    end
+  end
 
 end
