@@ -32,6 +32,13 @@ defmodule RangeListTest do
   test "test insert to join all ranges into one by inserting the middle"  do
     assert L.add_range([{1,3}, {10,20}], {3,10}) == [{1,20}]
   end
+  test "test insert an unmergeable range between two other ranges"  do
+    assert L.add_range([%{from: 1, to: 3, payload: :a}, %{from: 10,to: 20, payload: :a}], %{from: 3, to: 10, payload: :c}) == [
+      %{from: 1, to: 3, payload: :a},
+      %{from: 3, to: 10, payload: :c},
+      %{from: 10,to: 20, payload: :a}
+    ]
+  end
 
   test "cut_before and cut_after" do
     # cut with delimiter outside of ranges

@@ -25,10 +25,16 @@ defmodule Rangex.RangeList do
         range,{list, new_range} ->
           cond  do
             R.to(new_range) < R.from(range) ->
+              #new_range comes before this range
               {:cont, {[range,new_range| list] , nil}}
             R.mergeable?(range, new_range) ->
+              # we can merge the new range with this one
               {:cont ,{[R.merge!(new_range, range)| list], nil}}
+            R.from(new_range) <= R.from(range)->
+              #time to insert new range
+              {:cont, {[range,new_range|list], nil}}
             true->
+              #new range after this one
               {:cont, {[range|list], new_range}}
           end
       end)
