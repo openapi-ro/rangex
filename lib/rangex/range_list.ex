@@ -131,7 +131,8 @@ defmodule Rangex.RangeList do
           |>cut_after(R.to(big_range), overlapping: :cut)
           |>cut_before(R.from(big_range), overlapping: :cut)
         #insert begin and end markers
-        [R.new(big_range, R.from(big_range),R.from(big_range) )| range_list] ++ [R.new(big_range, R.to(big_range),R.to(big_range) )]
+        {first,last} = {List.first(range_list), List.last(range_list)}
+        [R.new(first, R.from(big_range),R.from(big_range) )| range_list] ++ [R.new(last, R.to(big_range),R.to(big_range) )]
       else
         range_list
       end
@@ -168,8 +169,9 @@ defmodule Rangex.RangeList do
             range_list
             |> cut_before(  R.from(covering_range))
             |> cut_after(  R.to(covering_range))
-          [R.new(covering_range, R.from(covering_range),  R.from(covering_range))|mod]++ [
-            R.new(covering_range, R.to(covering_range),  R.to(covering_range))
+            {first,last} = {List.first(range_list), List.last(range_list)}
+          [R.new(first, R.from(covering_range),  R.from(covering_range))|mod]++ [
+            R.new(last, R.to(covering_range),  R.to(covering_range))
           ]
       end
       |> Enum.reduce_while( nil , fn
