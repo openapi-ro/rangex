@@ -123,6 +123,8 @@ defmodule Rangex.RangeList do
     Returns a range describing the gap.
     The list must be sorted
   """
+  def longest_gap([], big_range) , do: big_range
+  def longest_gap([]) , do: nil
   def longest_gap(range_list, big_range\\nil) do
     range_list=
       if big_range do
