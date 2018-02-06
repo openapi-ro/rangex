@@ -78,6 +78,8 @@ defmodule RangeListTest do
     # now with a range cutting the first gap short
     assert L.first_gap([{1,3}, {5,6}], {-2,100}) == {-2,1}
     assert L.first_gap([{-3,3}, {3,6}, {500,1000}], {-3,100}) == {6,100}
+
+    assert L.first_gap([],{1,2}) == {1,2}
   end
 
 end

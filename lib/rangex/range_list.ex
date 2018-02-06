@@ -161,7 +161,8 @@ defmodule Rangex.RangeList do
     n_th_gap(1,range_list,covering_range)
   end
   #TODO: maybe expose this, but also add the possibility to look from the end
-  defp n_th_gap(n, [], _), do: nil
+  defp n_th_gap(n, [], nil), do: nil
+  defp n_th_gap(n, [], covering_range), do: covering_range
   defp n_th_gap(n, range_list, covering_range) do
     ret=
       case covering_range do
