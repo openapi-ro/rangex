@@ -9,7 +9,7 @@ defmodule Rangex.RangeList do
       range_list
       |> Enum.reduce_while( {[],to_insert} , fn
         range, {[prev| rest]=list, nil} ->
-          #this branch is the finisher after to_innsert has already been inserted
+          #this branch is the finisher after to_insert has already been inserted
           #check if the last one can be joined
           if R.mergeable?(prev, range) do
             R.merge!(prev, range)
@@ -58,7 +58,7 @@ defmodule Rangex.RangeList do
   @doc """
   Cut the `range_list` to contain all elements after the marker `from`
 
-  In case an individual range encloses `from` the behaviour is giben by the
+  In case an individual range encloses `to` the behaviour is given by the
   option `:overlapping`:
 
   - `:cut` cuts the range to start with `from`
@@ -91,7 +91,7 @@ defmodule Rangex.RangeList do
   @doc """
   Cut the `range_list` to contain all elements before the marker `to`
 
-  In case an individual range encloses `from` the behaviour is giben by the
+  In case an individual range encloses `from` the behaviour is given by the
   option `:overlapping`:
 
   - `:cut` cuts the range to end with `to`
