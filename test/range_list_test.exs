@@ -67,6 +67,7 @@ defmodule RangeListTest do
   test "longest_gap without delimiting range" do
     assert L.longest_gap([{1,3}, {10,20},{30,40}]) == {20,30}
     assert L.longest_gap([{1,3}, {15,20},{30,40}], {0,100}) == {40,100}
+    assert L.longest_gap([], {0,100}) == {0,100}
   end
   test "first_gap" do
     assert L.first_gap([{1,3}, {5,6}]) == {3,5}
@@ -80,6 +81,18 @@ defmodule RangeListTest do
     assert L.first_gap([{-3,3}, {3,6}, {500,1000}], {-3,100}) == {6,100}
 
     assert L.first_gap([],{1,2}) == {1,2}
+  end
+  test "gaps" do
+    assert L.gaps([{1,3}, {4,5}]) == [{3,4}]
+    assert L.gaps([{1,3}, {3,5}]) == []
+    assert L.gaps([{1,3},{4,5}], {0,100}) == [{0,1},{3,4},{5,100}]
+    assert L.gaps([{-10,3},{4,5}], {0,100}) == [{3,4},{5,100}]
+
+    assert L.gaps([{1,3}, {4,5}], {10,20}) == [{10,20}]
+    #special cases
+    assert L.gaps([] ,{1,2}) ==[{1,2}]
+    assert L.gaps([]) ==[]
+    assert L.gaps([{1,3}],nil) ==[]
   end
 
 end

@@ -119,6 +119,26 @@ defmodule Rangex.RangeList do
     end)
   end
   @doc """
+    cuts a range_list to only include ranges which are also covered by `covering_range`
+
+    In case an individual range exceeds the limits of `cover_range` the behaviour is given by the
+    option `:overlapping`:
+
+    - `:cut` cuts the range to start with `Rangex.Range.from(covering_range)` and end with `Rangex.Range.to(covering_range)`
+    - `:drop` [or false] drops ranges exceeding cover_range from the result
+    - `:include` [or `true` or any other value] includes the ranges overlapping with `cover_range`, with no other regard for their limits
+
+  """
+  def cut(range_list, covering_range, options \\ []) do
+    [overlapping: overlapping] =
+      normalize_cut_options options
+    {from,to} =
+      {R.from(covering_range), R.to(covering_range)}
+    range_list
+    |>cut_before(from, options)
+    |>cut_after(to, options)
+  end
+  @doc """
     returns the longest gap between two successive ranges in the list.
     Returns a range describing the gap.
     The list must be sorted
@@ -130,10 +150,10 @@ defmodule Rangex.RangeList do
       if big_range do
         range_list=
           range_list
-          |>cut_after(R.to(big_range), overlapping: :cut)
-          |>cut_before(R.from(big_range), overlapping: :cut)
+          |>cut(big_range, overlapping: :cut)
         #insert begin and end markers
-        {first,last} = {List.first(range_list), List.last(range_list)}
+        {first,last} =
+          {List.first(range_list), List.last(range_list)}
         [R.new(first, R.from(big_range),R.from(big_range) )| range_list] ++ [R.new(last, R.to(big_range),R.to(big_range) )]
       else
         range_list
@@ -151,9 +171,43 @@ defmodule Rangex.RangeList do
     |> elem(0)
   end
   @doc """
-    first_gap returns the first gap found, logging
+    `gaps/2` returns a range list containing all the ranges which are not covered
+
+    - if `covering_range` is supplied any range covered by `covering_range` but not by any `range` in `rangelist` will bbe part of the result
+    - if `covering_range` is nil, the ranges not covered _between_ `range`s in `range_list` will be returned
+    - any range outside of `covering_range` will not be part of the ranges
+  """
+  def gaps([]), do: []
+  def gaps([], nil), do: []
+  def gaps([], covering_range), do: [covering_range]
+  def gaps(range_list, nil), do: gaps(range_list)
+  def gaps(range_list, covering_range) do
+    gaps [
+      R.new(covering_range, R.from(covering_range), R.from(covering_range))
+      | cut(range_list, covering_range)
+    ] ++ [R.new(covering_range, R.to(covering_range), R.to(covering_range))]
+  end
+  def gaps(range_list) do
+    [first | range_list] = range_list
+    {result, _}=
+      range_list
+      |> Enum.reduce( {[], first}, fn
+          range, {result, last} ->
+            last_to = R.to(last)
+            {range_from, range_to} = {R.from(range), R.to(range)}
+            if R.difference(range,range_from, last_to) > 0 do
+              {[ R.new(last, last_to, range_from)|result],range}
+            else
+              {result, range}
+            end
+        end)
+    Enum.reverse result
+  end
+
+  @doc """
+    `first_gap/2` returns the first gap found, logging
     - between at the each successive pair of ranges
-    - between the limits optionally provided in covering_range
+    - between the limits optionally provided by `covering_range`
 
     in case a covering range is supplied any gaps before or after it are ignored
   """
