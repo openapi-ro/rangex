@@ -3,7 +3,7 @@ defmodule Rangex.RangeList do
   @doc """
     adds a range to a range_list.
   """
-  def add_range(range_list, to_insert, options \\ [sorted: true]) do
+  def add_range(range_list, to_insert, options \\ [sorted: true]) when is_list(range_list) do
     range_list = options[:sorted] && range_list || Enum.sort(range_list)
     {result, last}=
       range_list
