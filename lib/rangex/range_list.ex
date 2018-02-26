@@ -56,6 +56,16 @@ defmodule Rangex.RangeList do
     ]
   end
   @doc """
+    same as `add_range/3` but accept a list of ranges to be inserted
+  """
+  def add_ranges(range_list, list) when is_list(range_list) and is_list(list), do: add_ranges(range_list,list, [sorted: true])
+  def add_ranges(range_list, [], _options) when is_list(range_list), do: range_list
+  def add_ranges(range_list, [first|rest], options) when is_list(range_list) do
+    ret = add_range(range_list, first, options)
+    add_ranges(ret, rest, options)
+  end
+
+  @doc """
   Cut the `range_list` to contain all elements after the marker `from`
 
   In case an individual range encloses `to` the behaviour is given by the
