@@ -80,10 +80,28 @@ defprotocol Rangex.Range do
     returns the length of a range
   """
   def length(range)
+  @doc """
+    Sort function as used in &Enum.sort/2
+  """
+  def sort(first, second)
+  @doc """
+    calculates the intersection range between first and second
+    - if none is found nil is returned
+    - if the two ranges interdect, but are not mergeable nil is returned
+  """
+  def intersect(first, second)
+
+  @doc """
+    calculates the difference between the first and the second range, and returns the new range
+
+    - nil is returned if no difference is found. this happens when includes?(second, first)
+    Note that this differs from difference/3 which returns the difference between endpoints
+  """
+  def difference(first,second)
 end
 defmodule Rangex.Range.Default do
   defmacro __using__(_) do
-    quote do
+    quote location: :keep do
       def from(range), do: range.from
       def to(range), do: range.to
       def difference(model, a, b), do: a-b
@@ -91,6 +109,26 @@ defmodule Rangex.Range.Default do
       def new(model,from,to) do
         # is it ok to use a tuple in  `Any`'s implementation?'
         %{from: from, to: to}
+      end
+      def intersect(first, second) do
+        cond do
+          includes?(second,first)  -> second
+          includes?(first, second) -> first
+          overlaps?(first,second)  -> new(first, max(from(first), from(second)), min(to(first),to(second)))
+          true -> nil
+        end
+      end
+      def difference(first,second) do
+        cond do
+          includes?(second,first)-> nil
+          not overlaps?(second, first)-> first
+          true->
+            i = intersect(first,second)
+            cond do
+              from(i) == from(first) -> %{first| from: to(i)}
+              to(i) == to(first) -> %{first| to: from(i)}
+            end
+        end
       end
       def overlaps?(first, second) do
         not disjunct?(first,second)
@@ -100,6 +138,13 @@ defmodule Rangex.Range.Default do
           disjunct?(second,first)
         else
           to(first) < from(second)
+        end
+      end
+      def sort(first,second) do
+        case difference(first, from(first),from(second)) do
+          0 ->  difference(first, to(first),to(second)) <=0
+          i when i<0-> true
+          _-> false
         end
       end
       def includes?(includes, included) do
@@ -113,7 +158,7 @@ defmodule Rangex.Range.Default do
       end
       def merge(range1, range2) do
         if adiacent?(range1, range2) or overlaps?(range1, range2) do
-          {:ok, new(range1, min( from(range1), from(range2) ), max(to(range1),to(range2) ) )}
+          {:ok,new(range1, min( from(range1), from(range2) ), max(to(range1),to(range2) ) )}
         else
           :error
         end
@@ -133,7 +178,8 @@ defmodule Rangex.Range.Default do
                       overlaps?: 2,disjunct?: 2, includes?: 2, adiacent?: 2, mergeable?: 2,
                       merge!: 2, merge: 2,
                       difference: 3 , length: 1,
-                      split_points: 2, split_points: 1, split: 1, split: 2
+                      split_points: 2, split_points: 1, split: 1, split: 2,
+                      sort: 2
 
     end
   end

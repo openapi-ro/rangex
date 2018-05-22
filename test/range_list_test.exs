@@ -5,6 +5,16 @@ defmodule RangeListTest do
   test "insert in to empty range_list" do
     assert L.add_range([], {1,2}) == [{1,2}]
   end
+
+  test "add_ranges" do
+    assert L.add_ranges([] ,[{2,3},{2,4},{2,5}] ) == [{2,5}]
+    assert L.add_ranges([{2,30},{2,10},{2,5}], [{2,7},{2,3}] ) == [{2,30}]
+    assert L.add_ranges([{100,200},{2,30},{2,5},{2,10}], [{2,7},{2,3}], sorted: false) == [{2,30},{100,200}]
+    assert L.add_ranges([{2,5},{100,200},{2,30},{2,10}], [{2,3},{2,7}], sorted: false) == [{2,30},{100,200}]
+    assert L.add_ranges([{2,30},{2,5},{100,200},{2,10}], [{2,7},{2,3}], sorted: false ) == [{2,30},{100,200}]
+    assert L.add_ranges([], [{100,200},{2,30},{2,30},{2,30}, {40,50}], sorted: false) == [{2,30},{40,50},{100,200}]
+    
+  end
   test "insert into front of empty range_list" do
     assert L.add_range([{1,2}], {5,6}) == [{1,2},{5,6}]
   end
@@ -39,7 +49,9 @@ defmodule RangeListTest do
       %{from: 10,to: 20, payload: :a}
     ]
   end
-
+  test "add_rabge merges" do
+    assert L.add_range([{1,3},{1,4}, {1,5}], {1,5}, sorted: false) == [{1,5}]
+  end
   test "cut_before and cut_after" do
     # cut with delimiter outside of ranges
     assert L.cut_before([{1,2}, {10,11}, {13,14}], 9) == [{10,11}, {13,14}]

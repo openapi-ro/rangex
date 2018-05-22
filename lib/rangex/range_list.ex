@@ -2,24 +2,40 @@ defmodule Rangex.RangeList do
   alias Rangex.Range, as: R
   @doc """
     adds a range to a range_list.
+    options:
+      * `remove_contradicting`: if `true` removes any overlapping ranges for non-megeable entries. 
+        if ranges overlap partially the ones in `rangelist` are cut to "make room"
+
   """
-  def add_range(range_list, to_insert, options \\ [sorted: true]) when is_list(range_list) do
+  def add_range(range_list, to_insert, options \\ [sorted: true, remove_contradicting: true]) when is_list(range_list) do
     range_list = options[:sorted] && range_list || Enum.sort(range_list)
+    remove_contradictions = Keyword.get(options, :remove_contradicting, true)
     {result, last}=
       range_list
       |> Enum.reduce_while( {[],to_insert} , fn
         range, {[prev| rest]=list, nil} ->
           #this branch is the finisher after to_insert has already been inserted
           #check if the last one can be joined
-          if R.mergeable?(prev, range) do
-            R.merge!(prev, range)
-            {:cont , {[ R.merge!(prev, range)| rest], nil }}
-          else
-            remainder =
-              range_list
-              |> Enum.drop_while(&(not (&1 == range)))
-              |> Enum.reverse()
-            {:halt, { remainder ++ list, nil}}
+          cond do
+            R.mergeable?(prev, range) ->
+              {:cont , {[ R.merge!(prev, range)| rest], nil }}
+            R.overlaps?(range,prev) and remove_contradicting ->
+              # the newly inserted overlaps later ones
+              if R.includes?(prev,range) do
+                {:cont ,{list, nil}}
+              else
+                case R.difference(range, prev) do
+                  #nil-> {:cont, {[prev| list], nil}} #nil should not happen as we already know it overlaps
+                  diff->
+                    {:cont, {[diff|list], nil}}
+                end
+              end
+            true->
+              remainder =
+                range_list
+                |> Enum.drop_while(&(not (&1 == range)))
+                |> Enum.reverse()
+              {:halt, { remainder ++ list, nil}}
             #{:cont , {[ range| list], nil }}
           end
         range,{list, new_range} ->
@@ -30,6 +46,18 @@ defmodule Rangex.RangeList do
             R.mergeable?(range, new_range) ->
               # we can merge the new range with this one
               {:cont ,{[R.merge!(new_range, range)| list], nil}}
+            R.overlaps?(range,new_range) and remove_contradicting ->
+              if R.includes?(new_range,range) do
+                {:cont ,{[new_range| list], nil }}
+              else
+                #require IEx
+                #IEx.pry
+                case R.difference(range,new_range) do
+                  #nil-> {:cont, {[new_range| list], nil}} #nil should not happen as we already know it overlaps
+                  diff->
+                    {:cont, {[new_range,diff|list], nil}}
+                end
+              end
             R.from(new_range) <= R.from(range)->
               #time to insert new range
               {:cont, {[range,new_range|list], nil}}
@@ -39,9 +67,20 @@ defmodule Rangex.RangeList do
           end
       end)
     # result
+    #ret=
     (last && [last|result] || result)
     |> Enum.reverse()
+    #unless ret == sort(ret) do
+    #  require IEx
+    #  IEx.pry
+    #end
+    #ret
   end
+  def sort([]), do: []
+  def sort([_]=l), do: l
+  def sort([_first| _rest]=l), do: Enum.sort(l, fn first, second ->
+      R.sort(first,second)
+    end)
   # used to read cut options
   defp normalize_cut_options(options) when is_list(options) do
     [
@@ -60,9 +99,10 @@ defmodule Rangex.RangeList do
   """
   def add_ranges(range_list, list) when is_list(range_list) and is_list(list), do: add_ranges(range_list,list, [sorted: true])
   def add_ranges(range_list, [], _options) when is_list(range_list), do: range_list
-  def add_ranges(range_list, [first|rest], options) when is_list(range_list) do
-    ret = add_range(range_list, first, options)
-    add_ranges(ret, rest, options)
+  def add_ranges(range_list,list, options) when is_list(range_list) do
+    Enum.reduce  list , range_list, fn new, prev ->
+      add_range(prev, new, options)
+    end
   end
 
   @doc """

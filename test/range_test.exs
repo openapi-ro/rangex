@@ -17,4 +17,8 @@ defmodule RangeTest do
     assert Range.length({1,3}) == 2
     assert Range.length({1,4}) == 3
   end
+  test "megeable" do
+    assert Range.mergeable?({1,3},{1,5})
+    assert Range.merge!({1,3},{1,5}) == {1,5}
+  end
 end
