@@ -9,7 +9,7 @@ defmodule Rangex.RangeList do
   """
   def add_range(range_list, to_insert, options \\ [sorted: true, remove_contradicting: true]) when is_list(range_list) do
     range_list = options[:sorted] && range_list || Enum.sort(range_list)
-    remove_contradictions = Keyword.get(options, :remove_contradicting, true)
+    remove_contradicting = Keyword.get(options, :remove_contradicting, true)
     {result, last}=
       range_list
       |> Enum.reduce_while( {[],to_insert} , fn
