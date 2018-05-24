@@ -5,6 +5,8 @@ defmodule RangeTest do
   test "overlaps" do
     assert Range.overlaps?({1,3}, {2,3})
     assert Range.overlaps?({-1,3}, {2,5})
+    assert not Range.overlaps?({1,2},{2,3})
+    assert Range.disjunct?({1,2},{2,3})
   end
   test "merge" do
     assert Range.merge!({1,3}, {2,3})== {1,3}

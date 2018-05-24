@@ -3,11 +3,13 @@ defmodule Rangex.RangeList do
   @doc """
     adds a range to a range_list.
     options:
-      * `remove_contradicting`: if `true` removes any overlapping ranges for non-megeable entries. 
+      * `remove_contradicting`: if `true` removes any overlapping ranges for non-mergeable entries. 
         if ranges overlap partially the ones in `rangelist` are cut to "make room"
 
   """
   def add_range(range_list, to_insert, options \\ [sorted: true, remove_contradicting: true]) when is_list(range_list) do
+    #require Logger
+    #Logger.error("inaserting #{inspect to_insert}")
     range_list = options[:sorted] && range_list || Enum.sort(range_list)
     remove_contradicting = Keyword.get(options, :remove_contradicting, true)
     {result, last}=
@@ -206,19 +208,27 @@ defmodule Rangex.RangeList do
           {List.first(range_list), List.last(range_list)}
         [R.new(first, R.from(big_range),R.from(big_range) )| range_list] ++ [R.new(last, R.to(big_range),R.to(big_range) )]
       else
-        range_list
+        [first|rest] = range_list
+        [R.new(first,R.from(first), R.from(first)),first|rest]
       end
-
-    range_list
-    |> Enum.reduce(nil, fn
-        range, nil -> {range, R.to(range), 0}
-        range,{max, last_end, max_len} ->
-          case R.difference(range,R.from(range) ,  last_end) do
-            diff when diff > max_len -> {R.new(range, last_end, R.from(range)), R.to(range), diff }
-            _->{max, R.to(range), max_len}
-          end
-    end)
-    |> elem(0)
+    ret=
+      range_list
+      |> Enum.reduce(nil, fn
+          range, nil -> {range, R.to(range), 0}
+          range,{max, last_end, max_len} ->
+            case R.difference(range,R.from(range) ,  last_end) do
+              diff when diff > max_len -> 
+                  {R.new(range, last_end, R.from(range)), R.to(range), diff }
+              _->
+                  {max, R.to(range), max_len}
+            end
+      end)
+      |> elem(0)
+    if R.length(ret) == 0 do
+      nil
+    else
+      ret
+    end
   end
   @doc """
     `gaps/2` returns a range list containing all the ranges which are not covered

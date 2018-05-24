@@ -19,11 +19,11 @@ defprotocol Rangex.Range do
   """
   def new(model,from, to)
   @doc """
-    two ranges that do share a intersection range
+    two ranges that do share a intersection range of non-zero length
   """
   def overlaps?(first, second)
   @doc """
-    two ranges that do not share an intersection range
+    two ranges that do not share an intersection range of non-zero length (may be adiacent though)
   """
   def disjunct?(first, secons)
   @doc """
@@ -105,10 +105,11 @@ defmodule Rangex.Range.Default do
       def from(range), do: range.from
       def to(range), do: range.to
       def difference(model, a, b), do: a-b
-      #def difference(x,y), do: x-y
+
+      
       def new(model,from,to) do
         # is it ok to use a tuple in  `Any`'s implementation?'
-        %{from: from, to: to}
+        struct(model,%{from: from, to: to})
       end
       def intersect(first, second) do
         cond do
@@ -137,7 +138,7 @@ defmodule Rangex.Range.Default do
         if from(first) > from(second) do
           disjunct?(second,first)
         else
-          to(first) < from(second)
+          to(first) <= from(second)
         end
       end
       def sort(first,second) do
@@ -177,7 +178,7 @@ defmodule Rangex.Range.Default do
       defoverridable  from: 1, to: 1, new: 3,
                       overlaps?: 2,disjunct?: 2, includes?: 2, adiacent?: 2, mergeable?: 2,
                       merge!: 2, merge: 2,
-                      difference: 3 , length: 1,
+                      difference: 3 , difference: 2 , length: 1,
                       split_points: 2, split_points: 1, split: 1, split: 2,
                       sort: 2
 
@@ -220,9 +221,9 @@ defimpl Rangex.Range, for: Any do
   @fallback_to_any true
   def from(range), do: range.from
   def to(range), do: range.to
-  def new(_model,from,to) do
+  def new(model,from,to) do
     # is it ok to use a tuple in  `Any`'s implementation?'
-    %{from: from, to: to}
+    struct(model, %{from: from, to: to})
   end
   def overlaps?(first, second) do
     not disjunct?(first,second)
@@ -231,7 +232,7 @@ defimpl Rangex.Range, for: Any do
     if from(first) > from(second) do
       disjunct?(second,first)
     else
-      to(first) < from(second)
+      to(first) <= from(second)
     end
   end
   def includes?(includes, included) do
