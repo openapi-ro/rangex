@@ -106,5 +106,8 @@ defmodule RangeListTest do
     assert L.gaps([]) ==[]
     assert L.gaps([{1,3}],nil) ==[]
   end
+  test "range_list ordering" do
+     assert L.add_ranges([], [{1,2}, {1,5}, {1,3}, {6,8}]) == [{1,5}, {6,8}]
 
+  end
 end

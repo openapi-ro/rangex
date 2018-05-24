@@ -5,9 +5,9 @@ defmodule RangeListRemoveContradictingTest do
   alias Rangex.{RangeList}
   def new(from,to,payload) do
     %RangePayloadImpl{
+      _payload: payload,
       from: from,
-      to: to,
-      payload: payload
+      to: to
     }
   end
   test "one overlapping" do
@@ -25,5 +25,23 @@ defmodule RangeListRemoveContradictingTest do
   test "cuts on both ands and continuation afterwards" do
     list=[new(1,3,:a),new(4,7,:b), new(8,13,:c), new(13,15,:e) , new(2,11,:d)]
     assert RangeList.add_ranges([], list, sorted: true, remove_contradicting: true) == [new(1,2,:a),new(2,11,:d), new(11,13,:c),new(13,15,:e)]
+  end
+
+  test "insert order test" do
+    input=[
+      new( 8095,8705,true  ),
+      new( 8705 ,10359,false),
+      new( 8095,8705,true ),
+      new( 8705,10360,false ),
+      new( 6778, 7518,true ),
+      new( 7519, 7520,false ),
+      new( 6778, 7518,true )
+    ]
+    assert RangeList.add_ranges([], input, [sorted: true]) == [
+      new( 6778, 7518,true ),
+      new( 7519, 7520,false ),
+      new( 8095,8705,true  ),
+      new( 8705,10360,false )
+    ]
   end
 end
