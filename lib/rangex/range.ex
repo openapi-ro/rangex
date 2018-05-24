@@ -1,4 +1,5 @@
 defprotocol Rangex.Range do
+  @fallback_to_any true
   @moduledoc """
   Common range calculations
   """
@@ -77,7 +78,8 @@ defprotocol Rangex.Range do
   def split_points(range, n \\2)
 
   @doc """
-    returns the length of a range
+    returns the length of a range.
+    - nil is accepted as a 0 length range
   """
   def length(range)
   @doc """
@@ -168,6 +170,7 @@ defmodule Rangex.Range.Default do
         {:ok,ret}=merge(range1,range2)
         ret
       end
+      def length(nil), do: 0
       def length(range) do
         difference(range,to(range),from(range))
       end
@@ -218,7 +221,7 @@ defmodule Rangex.Range.Default do
   end
 end
 defimpl Rangex.Range, for: Any do
-  @fallback_to_any true
+  use Rangex.Range.Default
   def from(range), do: range.from
   def to(range), do: range.to
   def new(model,from,to) do
@@ -257,6 +260,7 @@ defimpl Rangex.Range, for: Any do
   end
 
 end
+
 defimpl Rangex.Range, for: Tuple do
   use Rangex.Range.Default
   def from({from,_to}), do: from
