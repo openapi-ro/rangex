@@ -1,10 +1,26 @@
 defmodule Rangex.RangeList do
   alias Rangex.Range, as: R
+
+  #function wrapper for on_contradiction argument of add_range to observe the nessesary iteration order
+  defp on_contradiction_wrap(fun) do
+    fn (left, right) ->
+      ## function to sort inversely the range for return
+      ret=
+        case fun.(left,right) do
+          [_|_]=ret->ret
+          range_obj-> [range_obj]
+        end
+      ret
+        |>sort()
+        |>Enum.reverse()
+    end
+  end
   @doc """
     adds a range to a range_list.
     options:
       * `remove_contradicting`: if `true` removes any overlapping ranges for non-mergeable entries. 
         if ranges overlap partially the ones in `rangelist` are cut to "make room"
+      * `on_conflict`: A function `fn left,right -> result_list end` returning the transformed list of left right to keep.
 
   """
   def add_range(range_list, to_insert, options \\ [sorted: true, remove_contradicting: true]) when is_list(range_list) do
@@ -12,6 +28,25 @@ defmodule Rangex.RangeList do
     #Logger.error("inaserting #{inspect to_insert}")
     range_list = options[:sorted] && range_list || Enum.sort(range_list)
     remove_contradicting = Keyword.get(options, :remove_contradicting, true)
+    on_contradiction= 
+      case Keyword.get(options, :on_contradiction) do
+        nil when remove_contradicting ->
+          fn left, right -> 
+            if R.includes?(left,right) do
+              [left]
+            else
+              case R.difference( left, right) do
+                nil->[right]
+                diff->
+                 [ right, diff]
+              end
+            end
+          end
+        nil when not remove_contradicting ->
+          fn left, right -> [left, right] end
+        fun when is_function(fun)->fun
+      end
+      |> on_contradiction_wrap()
     {result, last}=
       range_list
       |> Enum.reduce_while( {[],to_insert} , fn
@@ -21,17 +56,8 @@ defmodule Rangex.RangeList do
           cond do
             R.mergeable?(prev, range) ->
               {:cont , {[ R.merge!(prev, range)| rest], nil }}
-            R.overlaps?(range,prev) and remove_contradicting ->
-              # the newly inserted overlaps later ones
-              if R.includes?(prev,range) do
-                {:cont ,{list, nil}}
-              else
-                case R.difference(range, prev) do
-                  #nil-> {:cont, {[prev| list], nil}} #nil should not happen as we already know it overlaps
-                  diff->
-                    {:cont, {[diff|list], nil}}
-                end
-              end
+            R.overlaps?(range,prev) and on_contradiction ->
+              {:cont, {on_contradiction.( range, prev) ++ rest, nil} }
             true->
               remainder =
                 range_list
@@ -48,18 +74,8 @@ defmodule Rangex.RangeList do
             R.mergeable?(range, new_range) ->
               # we can merge the new range with this one
               {:cont ,{[R.merge!(new_range, range)| list], nil}}
-            R.overlaps?(range,new_range) and remove_contradicting ->
-              if R.includes?(new_range,range) do
-                {:cont ,{[new_range| list], nil }}
-              else
-                #require IEx
-                #IEx.pry
-                case R.difference(range,new_range) do
-                  #nil-> {:cont, {[new_range| list], nil}} #nil should not happen as we already know it overlaps
-                  diff->
-                    {:cont, {[new_range,diff|list], nil}}
-                end
-              end
+            R.overlaps?(range,new_range) and on_contradiction ->
+              {:cont, {on_contradiction.(range,new_range)++list, nil}}
             R.from(new_range) <= R.from(range)->
               #time to insert new range
               {:cont, {[range,new_range|list], nil}}
@@ -68,15 +84,8 @@ defmodule Rangex.RangeList do
               {:cont, {[range|list], new_range}}
           end
       end)
-    # result
-    #ret=
     (last && [last|result] || result)
     |> Enum.reverse()
-    #unless ret == sort(ret) do
-    #  require IEx
-    #  IEx.pry
-    #end
-    #ret
   end
   def sort([]), do: []
   def sort([_]=l), do: l
