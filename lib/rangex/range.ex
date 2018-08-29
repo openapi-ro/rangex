@@ -94,10 +94,16 @@ defprotocol Rangex.Range do
   def intersect(first, second)
 
   @doc """
-    calculates the difference between the first and the second range, and returns the new range
+    calculates the difference between the first and the second range, and returns the new ranges
+    The result is returned as a list.
 
-    - nil is returned if no difference is found. this happens when includes?(second, first)
+    - An empty List is returned if no difference is found. this happens when includes?(second, first)
     Note that this differs from difference/3 which returns the difference between endpoints
+
+    ##Examples: 
+    * `Range.difference({1,10}, {2,50}) == [{1,2}]`
+    * `Range.difference({1,10}, {2,5}) == [{1,2},{5,10}]`
+    * `Range.difference({5,10}, {2,50}) == []`
   """
   def difference(first,second)
 end
@@ -115,23 +121,14 @@ defmodule Rangex.Range.Default do
       end
       def intersect(first, second) do
         cond do
-          includes?(second,first)  -> second
-          includes?(first, second) -> first
+          includes?(second,first)  -> first
+          includes?(first, second) -> second
           overlaps?(first,second)  -> new(first, max(from(first), from(second)), min(to(first),to(second)))
           true -> nil
         end
       end
       def difference(first,second) do
-        cond do
-          includes?(second,first)-> nil
-          not overlaps?(second, first)-> first
-          true->
-            i = intersect(first,second)
-            cond do
-              from(i) == from(first) -> %{first| from: to(i)}
-              to(i) == to(first) -> %{first| to: from(i)}
-            end
-        end
+        Rangex.Range.Default.difference(first,second)
       end
       def overlaps?(first, second) do
         not disjunct?(first,second)
@@ -187,6 +184,19 @@ defmodule Rangex.Range.Default do
 
     end
   end
+
+  def difference(a,b) do
+    import Rangex.Range, only: [from: 1,to: 1, new: 3]
+    [ax,ay,bx,by] = [from(a), to(a), from(b), to(b)]
+    cond do
+      ax<=bx and bx>=ay -> [a]
+      ax<=bx and by>=ay -> [new(a,ax,bx)]
+      ax<=bx            -> [new(a,ax,bx), new(a,by,ay)]
+                 ax>=by -> [a]
+                 ay<=by -> []
+      true              -> [new(a,by,ay)]
+    end
+  end
   def split(range, n) do
     case Rangex.Range.split_points(range,n) do
       [] -> [range]
@@ -201,7 +211,7 @@ defmodule Rangex.Range.Default do
     end
   end
   def split_points(from,to), do: split_points(from,to,2)
-  def split_points(from,to,n) when to<=(from+1) , do: []
+  def split_points(from,to,_n) when to<=(from+1) , do: []
   def split_points(from,to,n) when n>(to-from),   do: (from+1)..(to-1)|> Enum.to_list()
   def split_points(from,to,n) do
     step= (to-from) / n
@@ -270,7 +280,7 @@ end
 defimpl Rangex.Range, for: Map do
   use Rangex.Range.Default
   def from(%{from: from}), do: from
-  def from(%{from: to}), do: to
+  def to(%{to: to}), do: to
   def mergeable?(range1,range2) do
     if overlaps?(range1, range2) or adiacent?(range1, range2) do
       if Map.drop(range1, [:from,:to]) == Map.drop(range2, [:from,:to]) do

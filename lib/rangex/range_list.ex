@@ -7,8 +7,10 @@ defmodule Rangex.RangeList do
       ## function to sort inversely the range for return
       ret=
         case fun.(left,right) do
-          [_|_]=ret->ret
-          range_obj-> [range_obj]
+          [_|_]=ret -> ret
+          []        -> []
+          range_obj ->
+            [range_obj]
         end
       ret
         |>sort()
@@ -36,9 +38,9 @@ defmodule Rangex.RangeList do
               [left]
             else
               case R.difference( left, right) do
-                nil->[right]
+                []->[right]
                 diff->
-                 [ right, diff]
+                 [ right] ++ diff
               end
             end
           end
@@ -57,7 +59,7 @@ defmodule Rangex.RangeList do
             R.mergeable?(prev, range) ->
               {:cont , {[ R.merge!(prev, range)| rest], nil }}
             R.overlaps?(range,prev) and on_contradiction ->
-              {:cont, {on_contradiction.( range, prev) ++ rest, nil} }
+              {:cont, {on_contradiction.(range, prev) ++ rest, nil} }
             true->
               remainder =
                 range_list

@@ -26,19 +26,18 @@ defmodule RangeListRemoveContradictingTest do
     list=[new(1,3,:a),new(4,7,:b), new(8,13,:c), new(13,15,:e) , new(2,11,:d)]
     assert RangeList.add_ranges([], list, sorted: true, remove_contradicting: true) == [new(1,2,:a),new(2,11,:d), new(11,13,:c),new(13,15,:e)]
   end
-
   test "tests custom on_contradiction function" do
     list=[new(1,3,true),new(4,7,false),new(2,13,false)]
     on_contradiction = fn (left, right) ->
       if left._payload do
         case  Range.difference(right,left) do
-          nil->left
-          diff-> [left,diff]
+          []->[left]
+          diff-> [left|diff]
         end
         else
         case  Range.difference(left, right) do
-          nil ->right
-          diff -> [diff,right]
+          [] ->[right]
+          diff -> diff ++ [right]
         end
       end
     end
