@@ -28,7 +28,7 @@ defmodule Rangex.RangeList do
   def add_range(range_list, to_insert, options \\ [sorted: true, remove_contradicting: true]) when is_list(range_list) do
     #require Logger
     #Logger.error("inaserting #{inspect to_insert}")
-    range_list = options[:sorted] && range_list || Enum.sort(range_list)
+    range_list = Keyword.get(options, :sorted, true) && range_list || sort(range_list)
     remove_contradicting = Keyword.get(options, :remove_contradicting, true)
     on_contradiction= 
       case Keyword.get(options, :on_contradiction) do
@@ -75,7 +75,8 @@ defmodule Rangex.RangeList do
               {:cont, {[range,new_range| list] , nil}}
             R.mergeable?(range, new_range) ->
               # we can merge the new range with this one
-              {:cont ,{[R.merge!(new_range, range)| list], nil}}
+              # at the same time the merged one might overlap
+              {:cont ,{ list, R.merge!(new_range, range)}}
             R.overlaps?(range,new_range) and on_contradiction ->
               {:cont, {on_contradiction.(range,new_range)++list, nil}}
             R.from(new_range) <= R.from(range)->

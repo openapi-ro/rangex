@@ -281,6 +281,7 @@ defimpl Rangex.Range, for: Map do
   use Rangex.Range.Default
   def from(%{from: from}), do: from
   def to(%{to: to}), do: to
+  def new(model, from, to), do: %{model| from: from, to: to}
   def mergeable?(range1,range2) do
     if overlaps?(range1, range2) or adiacent?(range1, range2) do
       if Map.drop(range1, [:from,:to]) == Map.drop(range2, [:from,:to]) do

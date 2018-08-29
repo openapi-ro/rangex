@@ -13,7 +13,7 @@ defmodule RangeListTest do
     assert L.add_ranges([{2,5},{100,200},{2,30},{2,10}], [{2,3},{2,7}], sorted: false) == [{2,30},{100,200}]
     assert L.add_ranges([{2,30},{2,5},{100,200},{2,10}], [{2,7},{2,3}], sorted: false ) == [{2,30},{100,200}]
     assert L.add_ranges([], [{100,200},{2,30},{2,30},{2,30}, {40,50}], sorted: false) == [{2,30},{40,50},{100,200}]
-    
+
   end
   test "insert into front of empty range_list" do
     assert L.add_range([{1,2}], {5,6}) == [{1,2},{5,6}]
@@ -108,6 +108,75 @@ defmodule RangeListTest do
   end
   test "range_list ordering" do
      assert L.add_ranges([], [{1,2}, {1,5}, {1,3}, {6,8}]) == [{1,5}, {6,8}]
+
+  end
+  test "duplicates are not actually inserted" do
+    assert L.add_range([{1,2},{3,4}], {3,4}) == [{1,2},{3,4}]
+    assert L.add_range([{1,2},{3,4}], {1,2}) == [{1,2},{3,4}]
+    assert L.add_range([{1,2},{2,3}], {1,2}) == [{1,3}]
+
+
+    assert L.add_range(
+        [
+          %{payload: true , from: 1, to: 2},
+          %{payload: false, from: 3, to: 4}
+        ],
+        %{payload: true, from: 1, to: 2}
+      ) == [
+        %{payload: true , from: 1, to: 2},
+        %{payload: false, from: 3, to: 4}
+      ]
+    assert L.add_range(
+        [
+          %{payload: true , from: 1, to: 2},
+          %{payload: false, from: 2, to: 3}
+        ],
+        %{payload: true, from: 1, to: 2}
+      ) == [
+        %{payload: true , from: 1, to: 2},
+        %{payload: false, from: 2, to: 3}
+      ]
+  end
+  test "on_contradiction not called when ranges are merely adjacent" do
+    assert L.add_range(
+      [
+        %{payload: true , from: 1, to: 2},
+        %{payload: false, from: 2, to: 3}
+      ],
+      %{payload: true, from: 1, to: 2},
+      on_conflict: fn _a,_b->
+        assert "Should not arrive here" == true
+      end
+    ) == [
+      %{payload: true , from: 1, to: 2},
+      %{payload: false, from: 2, to: 3}
+    ]
+    assert L.add_range(
+      [
+        %{payload: true , from: 1, to: 2},
+      ],
+      %{payload: false, from: 2, to: 3},
+      on_conflict: fn _a,_b->
+        assert "Should not arrive here" == true
+      end
+    ) == [
+      %{payload: true , from: 1, to: 2},
+      %{payload: false, from: 2, to: 3}
+    ]
+  end
+
+  test "sorted option" do
+    assert L.add_range(
+      [
+        %{_payload: true , from: 1, to: 2},
+        %{_payload: false, from: 2, to: 3}
+      ],
+      %{_payload: true, from: 1, to: 2},
+      sorted: false
+    ) == [
+      %{_payload: true , from: 1, to: 2},
+      %{_payload: false, from: 2, to: 3}
+    ]
 
   end
 end
