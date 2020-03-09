@@ -15,7 +15,7 @@ defmodule Rangex.MixProject do
       deps: deps(),
       test_coverage: [tool: ExCoveralls],
       consolidate_protocols: Mix.env != :test,
-      preferred_cli_env: ["coveralls": :test, "coveralls.detail": :test, "coveralls.post": :test, "coveralls.html": :test]
+      preferred_cli_env: [coveralls: :test, "coveralls.detail": :test, "coveralls.post": :test, "coveralls.html": :test]
 
     ]
   end
